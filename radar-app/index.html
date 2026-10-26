@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Radar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#F2F3F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1020" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Radar de Seguidores</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: coluna única de leitura. Cabeçalho, passo 1 (exportar), passo 2 (enviar arquivos), resultados em abas. */
+:root{
+  --bg:#F2F3F8; --surface:#FFFFFF; --fg:#14172B; --muted:#5E637D; --line:#DDE0EC;
+  --accent:#4338CA; --accent-fg:#FFFFFF; --accent-soft:#E6E4FB;
+  --warn:#B4261F; --warn-soft:#FBE4E2; --ok:#17734A; --ok-soft:#DDF2E7;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1020; --surface:#171A30; --fg:#ECEDF7; --muted:#9A9FBE; --line:#2A2E4C;
+    --accent:#A39BFF; --accent-fg:#0E1020; --accent-soft:#25264F;
+    --warn:#FF8D85; --warn-soft:#3A1E27; --ok:#6DDBA2; --ok-soft:#173629;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1020; --surface:#171A30; --fg:#ECEDF7; --muted:#9A9FBE; --line:#2A2E4C;
+  --accent:#A39BFF; --accent-fg:#0E1020; --accent-soft:#25264F;
+  --warn:#FF8D85; --warn-soft:#3A1E27; --ok:#6DDBA2; --ok-soft:#173629;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:400 15px/1.55 var(--body);margin:0;
+  padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1;letter-spacing:-.01em}
+h1{font-size:clamp(34px,8vw,52px);font-weight:800}
+h2{font-size:21px;font-weight:700}
+p{margin:0}
+.lede{color:var(--muted);max-width:56ch;margin-top:12px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+section{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+details.panel summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+details.panel summary::after{content:"+";font-family:var(--mono);color:var(--accent)}
+details.panel[open] summary::after{content:"–"}
+details.panel ol{margin:14px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;color:var(--muted)}
+details.panel ol b{color:var(--fg);font-weight:600}
+.note{font-size:13px;color:var(--muted)}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.slot{display:flex;flex-direction:column;gap:10px;min-width:0}
+.slot h3{font-size:16px;font-weight:700}
+.drop{display:flex;flex-direction:column;gap:4px;align-items:flex-start;border:1.5px dashed var(--line);border-radius:10px;padding:16px;cursor:pointer;background:var(--surface);transition:border-color .15s,background .15s}
+.drop:hover,.drop.over,.drop:focus-within{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{font-weight:600}
+.drop span{font-size:13px;color:var(--muted)}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 12px/1 var(--mono);padding:7px 9px;border-radius:6px;background:var(--line);color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+button{font:600 14px/1 var(--body);border-radius:8px;padding:11px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.link{border:0;background:none;padding:4px 0;color:var(--accent);text-align:left}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.tab{flex:0 0 auto;display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;padding:12px 14px;min-width:140px}
+.tab .n{font:800 28px/1 var(--display);font-variant-numeric:tabular-nums}
+.tab .l{font-size:12.5px;font-weight:500;color:var(--muted)}
+.tab[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.tab[aria-selected="true"] .l{color:var(--fg)}
+.tab.bad[aria-selected="true"] .n{color:var(--warn)}
+.tab[disabled]{opacity:.5;cursor:default}
+.tools{display:flex;flex-wrap:wrap;gap:10px}
+.tools input[type=search]{flex:1 1 200px;min-width:0;font:400 15px var(--body);padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+ul.users{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);max-height:62vh;overflow-y:auto}
+ul.users li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);min-width:0}
+ul.users li:last-child{border-bottom:0}
+ul.users a{font:500 14px var(--mono);color:var(--fg);text-decoration:none;overflow-wrap:anywhere}
+ul.users a:hover{color:var(--accent);text-decoration:underline}
+.tag{flex:0 0 auto;font:500 11px/1 var(--mono);padding:5px 7px;border-radius:5px;background:var(--warn-soft);color:var(--warn)}
+.empty{padding:22px 14px;color:var(--muted);text-align:center}
+textarea.fallback{width:100%;height:120px;font:400 13px var(--mono);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:10px}
+.desc{color:var(--muted);font-size:14px}
+</style>
+
+<style>
+html{background:var(--bg)}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Instagram · análise local</p>
+    <h1>Radar de Seguidores</h1>
+    <p class="lede">Descubra quem não te segue de volta e quem deixou de te seguir. Envie os arquivos JSON que o próprio Instagram gera: os da exportação atual e os de uma exportação mais antiga. Nada é enviado para a internet e sua senha nunca é pedida.</p>
+  </header>
+
+  <section>
+    <h2>1. Baixe seus dados do Instagram</h2>
+    <details class="panel">
+      <summary>Como pedir a exportação</summary>
+      <ol>
+        <li>No app do Instagram, abra <b>Configurações</b> e entre em <b>Central de Contas</b>.</li>
+        <li>Toque em <b>Suas informações e permissões</b> e depois em <b>Exportar suas informações</b>.</li>
+        <li>Crie uma exportação <b>para o dispositivo</b> e escolha <b>Personalizar informações</b>.</li>
+        <li>Marque só <b>Seguidores e seguindo</b>. Em intervalo de datas, escolha <b>Todo o período</b>.</li>
+        <li>No formato, escolha <b>JSON</b> (HTML também funciona) e inicie a exportação.</li>
+        <li>Quando o Instagram avisar que está pronto, baixe o arquivo .zip. Pode enviar o .zip direto, ou os arquivos <b>followers_1.json</b> e <b>following.json</b>.</li>
+      </ol>
+    </details>
+    <p class="note">O Instagram não informa a data em que alguém deixou de seguir. Para saber quem saiu, é preciso comparar duas exportações feitas em dias diferentes. Peça uma nova exportação sempre que quiser conferir.</p>
+  </section>
+
+  <section>
+    <h2>2. Envie os arquivos</h2>
+    <div class="slots">
+      <div class="slot" id="slot-cur">
+        <h3>Exportação atual</h3>
+        <label class="drop" id="drop-cur">
+          <strong>Escolher arquivos</strong>
+          <span>.zip, followers_1.json e following.json (ou arraste aqui)</span>
+          <input type="file" id="file-cur" multiple accept=".json,.html,.zip">
+        </label>
+        <div class="chips" id="chips-cur"></div>
+        <div class="row-actions"><button class="link" id="clear-cur" type="button" hidden>Limpar</button></div>
+      </div>
+      <div class="slot" id="slot-prev">
+        <h3>Exportação anterior <span class="note">(opcional)</span></h3>
+        <label class="drop" id="drop-prev">
+          <strong>Escolher arquivos</strong>
+          <span>Uma exportação mais antiga, para ver quem saiu</span>
+          <input type="file" id="file-prev" multiple accept=".json,.html,.zip">
+        </label>
+        <div class="chips" id="chips-prev"></div>
+        <div class="row-actions">
+          <button class="link" id="use-saved" type="button" hidden></button>
+          <button class="link" id="clear-prev" type="button" hidden>Limpar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results" hidden>
+    <h2>3. Resultado</h2>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <p class="desc" id="desc"></p>
+    <div class="tools">
+      <input type="search" id="q" placeholder="Buscar usuário" aria-label="Buscar usuário">
+      <button type="button" id="copy">Copiar lista</button>
+    </div>
+    <textarea class="fallback" id="fallback" readonly hidden aria-label="Lista para copiar"></textarea>
+    <ul class="users" id="list"></ul>
+    <div class="panel" id="save-box">
+      <p class="note" style="margin-bottom:10px">Guarde esta exportação neste navegador. Na próxima vez, ela serve de exportação anterior sem precisar enviar os arquivos de novo.</p>
+      <button type="button" class="primary" id="save-snap">Guardar como referência</button>
+      <span class="note" id="save-msg"></span>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+  var KEY='radar-seguidores-ref-v1';
+  var state={cur:{followers:new Set(),following:new Set()},prev:{followers:new Set(),following:new Set()}};
+  var tab='naosegue';
+  function $(id){return document.getElementById(id)}
+  function fmt(n){return n.toLocaleString('pt-BR')}
+
+  function clean(s){
+    if(!s)return '';
+    s=String(s).trim().replace(/^@/,'');
+    if(s.indexOf('/')>-1){var p=s.split('/').filter(Boolean);s=p[p.length-1]||''}
+    s=s.toLowerCase();
+    return /^[a-z0-9._]{1,30}$/.test(s)?s:'';
+  }
+  function fromJson(text){
+    var data;try{data=JSON.parse(text)}catch(e){return []}
+    var items=Array.isArray(data)?data:(Object.keys(data).map(function(k){return data[k]}).find(Array.isArray)||[]);
+    var out=[];
+    items.forEach(function(it){
+      var sd=it&&it.string_list_data&&it.string_list_data[0];
+      var u=clean(sd&&sd.value)||clean(it&&it.title)||clean(sd&&sd.href);
+      if(u)out.push(u);
+    });
+    return out;
+  }
+  function fromHtml(text){
+    var doc=new DOMParser().parseFromString(text,'text/html'),out=[];
+    doc.querySelectorAll('a[href*="instagram.com"]').forEach(function(a){
+      var u=clean(a.getAttribute('href'))||clean(a.textContent);
+      if(u)out.push(u);
+    });
+    return out;
+  }
+  function handle(name,text,bucket,seen){
+    var base=name.split('/').pop().toLowerCase();
+    var kind=base.indexOf('followers')===0?'followers':(base.indexOf('following')===0&&base.indexOf('hashtag')<0?'following':null);
+    if(!kind)return;
+    var users=/\.json$/.test(base)?fromJson(text):(/\.html?$/.test(base)?fromHtml(text):[]);
+    users.forEach(function(u){bucket[kind].add(u)});
+    if(users.length)seen[kind]=true;
+  }
+  async function ingest(key,files){
+    var seen={};
+    for(var i=0;i<files.length;i++){
+      var f=files[i];
+      try{
+        if(/\.zip$/i.test(f.name)){
+          var zip=await JSZip.loadAsync(f);
+          var names=Object.keys(zip.files);
+          for(var j=0;j<names.length;j++){
+            var ent=zip.files[names[j]];
+            if(ent.dir)continue;
+            if(!/\.(json|html?)$/i.test(names[j]))continue;
+            handle(names[j],await ent.async('string'),state[key],seen);
+          }
+        }else{
+          handle(f.name,await f.text(),state[key],seen);
+        }
+      }catch(e){}
+    }
+    if(!seen.followers&&!seen.following){
+      var c=$('chips-'+key);var m=document.createElement('span');
+      m.className='chip';m.textContent='Nenhum arquivo de seguidores ou seguindo encontrado';c.appendChild(m);
+      setTimeout(function(){render()},2500);
+      return;
+    }
+    render();
+  }
+
+  function chips(key){
+    var c=$('chips-'+key);c.textContent='';
+    var s=state[key];
+    [['followers','Seguidores'],['following','Seguindo']].forEach(function(p){
+      var n=s[p[0]].size,el=document.createElement('span');
+      el.className='chip'+(n?' ok':'');
+      el.textContent=p[1]+': '+(n?fmt(n):'falta');
+      c.appendChild(el);
+    });
+    var has=s.followers.size||s.following.size;
+    $('clear-'+key).hidden=!has;
+  }
+  function minus(a,b){var r=[];a.forEach(function(u){if(!b.has(u))r.push(u)});return r.sort()}
+
+  function lists(){
+    var c=state.cur,p=state.prev;
+    var curOk=c.followers.size&&c.following.size;
+    var prevOk=p.followers.size>0;
+    var L={};
+    L.naosegue={label:'Não seguem de volta',bad:true,ready:!!curOk,
+      desc:'Contas que você segue e que não seguem você.',
+      items:curOk?minus(c.following,c.followers).map(function(u){return{u:u}}):[]};
+    L.saiu={label:'Deixaram de seguir',bad:true,ready:!!(c.followers.size&&prevOk),
+      desc:'Estavam na exportação anterior e não estão mais entre seus seguidores. Pode ser que a conta tenha sido apagada ou renomeada.',
+      items:(c.followers.size&&prevOk)?minus(p.followers,c.followers).map(function(u){return{u:u,tag:c.following.has(u)?'você ainda segue':null}}):[]};
+    return L;
+  }
+
+  function render(){
+    chips('cur');chips('prev');
+    var c=state.cur;
+    var show=c.followers.size||c.following.size;
+    $('results').hidden=!show;
+    if(!show)return;
+    var L=lists(),tabs=$('tabs');tabs.textContent='';
+    var order=['naosegue','saiu'];
+    if(!L[tab]||!L[tab].ready)tab=order.find(function(k){return L[k].ready})||'naosegue';
+    order.forEach(function(k){
+      var t=L[k],b=document.createElement('button');
+      b.type='button';b.className='tab'+(t.bad?' bad':'');b.setAttribute('role','tab');
+      b.setAttribute('aria-selected',k===tab?'true':'false');
+      b.disabled=!t.ready;
+      var n=document.createElement('span');n.className='n';n.textContent=t.ready?fmt(t.items.length):'–';
+      var l=document.createElement('span');l.className='l';l.textContent=t.label;
+      b.appendChild(n);b.appendChild(l);
+      b.addEventListener('click',function(){tab=k;render()});
+      tabs.appendChild(b);
+    });
+    var cur=L[tab];
+    $('desc').textContent=cur.desc;
+    drawList(cur);
+    $('fallback').hidden=true;
+  }
+  function drawList(cur){
+    var q=$('q').value.trim().toLowerCase().replace(/^@/,'');
+    var ul=$('list');ul.textContent='';
+    var items=cur.items.filter(function(i){return !q||i.u.indexOf(q)>-1});
+    if(!items.length){
+      var li=document.createElement('li');li.className='empty';
+      li.textContent=cur.items.length?'Nenhum usuário com esse nome.':'Lista vazia. Nada a mostrar aqui.';
+      ul.appendChild(li);return;
+    }
+    items.forEach(function(i){
+      var li=document.createElement('li'),a=document.createElement('a');
+      a.href='https://www.instagram.com/'+i.u+'/';a.target='_blank';a.rel='noopener';a.textContent='@'+i.u;
+      li.appendChild(a);
+      if(i.tag){var t=document.createElement('span');t.className='tag';t.textContent=i.tag;li.appendChild(t)}
+      ul.appendChild(li);
+    });
+  }
+
+  function wire(key){
+    var inp=$('file-'+key),drop=$('drop-'+key);
+    inp.addEventListener('change',function(){if(inp.files.length)ingest(key,inp.files);inp.value=''});
+    ['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over')})});
+    ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over')})});
+    drop.addEventListener('drop',function(e){if(e.dataTransfer&&e.dataTransfer.files.length)ingest(key,e.dataTransfer.files)});
+    $('clear-'+key).addEventListener('click',function(){state[key]={followers:new Set(),following:new Set()};render()});
+  }
+  wire('cur');wire('prev');
+  $('q').addEventListener('input',function(){drawList(lists()[tab])});
+
+  $('copy').addEventListener('click',function(){
+    var items=lists()[tab].items;
+    var text=items.map(function(i){return '@'+i.u}).join('\n');
+    var fb=$('fallback');
+    function manual(){fb.value=text;fb.hidden=false;fb.focus();fb.select()}
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        var b=$('copy');b.textContent='Copiado';setTimeout(function(){b.textContent='Copiar lista'},1600);
+      },manual);
+    }else manual();
+  });
+
+  function readSnap(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
+  var snap=readSnap();
+  if(snap&&snap.followers&&snap.followers.length){
+    var b=$('use-saved');b.hidden=false;
+    b.textContent='Usar referência guardada em '+new Date(snap.date).toLocaleDateString('pt-BR')+' ('+fmt(snap.followers.length)+' seguidores)';
+    b.addEventListener('click',function(){
+      state.prev={followers:new Set(snap.followers),following:new Set(snap.following||[])};
+      render();
+    });
+  }
+  $('save-snap').addEventListener('click',function(){
+    var msg=$('save-msg');
+    try{
+      localStorage.setItem(KEY,JSON.stringify({date:Date.now(),followers:Array.from(state.cur.followers),following:Array.from(state.cur.following)}));
+      msg.textContent=' Guardado neste navegador.';
+    }catch(e){msg.textContent=' Este navegador não permitiu guardar. Mantenha o arquivo da exportação para comparar depois.'}
+  });
+  render();
+})();
+</script>
+
+</body>
+</html>

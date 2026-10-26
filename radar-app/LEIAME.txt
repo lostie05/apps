@@ -1,0 +1,12 @@
+RADAR DE SEGUIDORES - como colocar na tela inicial do iPhone
+
+1. Crie uma conta gratuita em github.com (se ainda nao tiver).
+2. Crie um repositorio novo, publico, com o nome que quiser (ex.: radar).
+3. Em "Add file > Upload files", envie TODOS os arquivos desta pasta
+   (index.html, manifest.webmanifest e os tres .png) e confirme.
+4. Em Settings > Pages, escolha "Deploy from a branch", branch main, pasta "/ (root)", e salve.
+5. Aguarde 1 a 2 minutos. O endereco sera https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/
+6. No iPhone, abra esse endereco no Safari, toque em compartilhar e em "Adicionar a Tela de Inicio".
+
+O icone do radar aparece na tela inicial e o app abre em tela cheia.
+Seus dados do Instagram sao lidos so no aparelho; nada e enviado a servidor algum.
