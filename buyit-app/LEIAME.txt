@@ -1,0 +1,16 @@
+BUYIT - como colocar na tela inicial do iPhone (e como atualizar)
+
+PRIMEIRA VEZ
+1. No seu repositorio do GitHub (o mesmo do Radar serve), clique em "Add file > Upload files".
+2. Envie esta pasta (buyit-app) com todos os arquivos dentro.
+3. Em 1 a 2 minutos o app estara em:
+   https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/buyit-app/
+4. No Safari do iPhone, abra o endereco, toque em compartilhar e em "Adicionar a Tela de Inicio".
+
+ATUALIZAR (quem ja instalou a versao anterior)
+1. Envie os arquivos desta pasta de novo para a mesma pasta no GitHub, substituindo os antigos.
+2. No iPhone, abra o app, feche por completo (deslize para cima) e abra mais uma vez.
+   A nova versao aparece na segunda abertura. Seus links salvos continuam la.
+
+Dica: copie um link em qualquer app e toque em "Colar" no BuYiT. A categoria e sugerida pelas palavras do link.
+Em Ajustes (engrenagem) voce copia um backup dos seus links.
